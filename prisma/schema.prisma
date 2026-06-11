@@ -1,1 +1,138 @@
+// Directorio Digital de la Huasteca Hidalguense
+// Database Schema
 
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================
+// Categorías de Negocios
+// ============================
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  icon        String?    // Nombre del icono Lucide
+  description String?
+  color       String?    // Color representativo (hex)
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  businesses Business[]
+}
+
+// ============================
+// Entradas del Directorio
+// ============================
+enum BusinessStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Business {
+  id          String         @id @default(cuid())
+  name        String
+  categoryId  String
+  category    Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  logo        String?        // URL del logotipo/imagen
+  description String
+  address     String
+  city        String?        // Ciudad/localidad
+  phone       String
+  whatsapp    String?        // Enlace de WhatsApp
+  facebook    String?        // URL de Facebook
+  instagram   String?        // URL de Instagram
+  website     String?        // URL del sitio web
+  latitude    Float?
+  longitude   Float?
+  status      BusinessStatus @default(PENDING)
+  featured    Boolean        @default(false) // Negocio destacado
+  planId      String?        // Plan del negocio
+  plan        Plan?          @relation(fields: [planId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([name])
+}
+
+// ============================
+// Planes de Negocio
+// ============================
+enum PlanType {
+  GRATUITO
+  LANDING_PAGE
+  CHATBOT
+  MENU_DIGITAL
+}
+
+model Plan {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  type        PlanType   @unique
+  price       Float      @default(0) // Precio mensual en MXN
+  description String
+  features    String     // Características separadas por |
+  icon        String?    // Icono Lucide
+  color       String?    // Color representativo
+  popular     Boolean    @default(false) // Plan más popular
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  businesses Business[]
+}
+
+// ============================
+// Mensajes de Contacto
+// ============================
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+}
+
+model ContactMessage {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  business  String?       // Nombre del negocio (si aplica)
+  subject   String
+  message   String
+  plan      String?       // Plan de interés
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================
+// Administradores
+// ============================
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+model Admin {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String    // Contraseña hasheada con bcrypt
+  name      String
+  role      AdminRole @default(ADMIN)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
